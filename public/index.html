@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Полудень — Управление</title>
+<style>
+body{font-family:'Segoe UI',Tahoma,Verdana,sans-serif;background:rgba(18,18,18,.9);background-image:url('bg.jpg');background-size:cover;background-position:center;background-attachment:fixed;background-blend-mode:darken;color:#e0e0e0;margin:0;padding:20px}
+h1,h2,h3{color:#4CAF50;border-bottom:2px solid #333;padding-bottom:10px}
+.container{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 2fr;gap:20px}
+.card{background:#1e1e1e;border:1px solid #333;border-radius:8px;padding:20px;box-shadow:0 4px 8px rgba(0,0,0,.5)}
+.full-width{grid-column:1/-1}
+input,select,button{background:#2d2d2d;color:#fff;border:1px solid #444;padding:10px;border-radius:4px;margin:5px 0;width:100%;box-sizing:border-box}
+button{background:#4CAF50;cursor:pointer;font-weight:bold;border:none}
+button:hover{background:#45a049}
+button.secondary{background:#2196F3}button.secondary:hover{background:#1976D2}
+button.danger{background:#f44336;width:auto;padding:5px 10px;margin:0}
+button.danger:hover{background:#d32f2f}
+button.small{width:auto;padding:5px 10px;margin:0}
+.top-bar{max-width:1400px;margin:0 auto 15px;display:flex;gap:10px;justify-content:flex-end;align-items:center}
+.top-bar button{width:auto}
+.user-info{color:#FFC107;font-size:.85rem;margin-right:auto;padding-left:5px}
+.player-item{background:#2a2a2a;padding:10px;margin-bottom:8px;border-left:4px solid #2196F3;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.player-item.role-commander{border-left-color:#FFD700;background:#3a2a1a}
+.player-item.role-caller{border-left-color:#9C27B0;background:#2a1a3a}
+.player-item.selected-member{box-shadow:0 0 0 2px #FFC107 inset}
+.player-info{flex-grow:1}.player-stats{font-size:.85rem;color:#888}
+.star-btn{background:transparent;color:#666;border:1px solid #444;font-size:18px;padding:4px 8px;width:auto;margin:0;line-height:1}
+.star-btn:hover{background:#333;color:#FFC107}.star-btn.active{color:#FFC107;border-color:#FFC107}
+.squad-block{background:#2a2a2a;padding:15px;margin-bottom:15px;border-left:4px solid #4CAF50}
+.slots-container{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.slot{background:#37474F;border:1px dashed #607D8B;border-radius:4px;padding:10px;width:160px;text-align:center;font-size:.9rem;position:relative}
+.slot.empty{color:#888;font-style:italic}
+.slot.filled{border:1px solid #4CAF50;color:#fff;font-weight:bold;background:#1B5E20}
+.slot.role-commander{border:1px solid #FFD700;background:#4E342E}
+.slot.role-caller{border:1px solid #9C27B0;background:#4A148C}
+.slot .remove-btn{position:absolute;top:5px;right:5px;background:transparent;color:#ff5252;border:none;font-weight:bold;cursor:pointer;font-size:14px;padding:0;width:auto}
+.slot .remove-btn:hover{color:#fff}
+.gray{color:#888}.red{color:#F44336}.green{color:#4CAF50}
+.clan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:15px}
+.clan-card{background:#263238;border-radius:8px;padding:14px;border-left:4px solid #2196F3;display:flex;flex-direction:column;transition:opacity .3s,filter .3s}
+.clan-card.role-commander{border-left-color:#FFD700;background:#3a2a1a}
+.clan-card.role-caller{border-left-color:#9C27B0;background:#2a1a3a}
+.clan-card.paid{opacity:.5;filter:grayscale(.75)}
+.clan-card .name{font-weight:bold;font-size:1.1rem;margin-bottom:8px;display:block}
+.clan-card .stat{font-size:.85rem;color:#ccc}
+.clan-card .role-tag{display:inline-block;margin-top:6px;font-size:.75rem;padding:2px 8px;border-radius:10px;background:#455A64;color:#fff;align-self:flex-start}
+.clan-card.role-commander .role-tag{background:#FFD700;color:#000}
+.clan-card.role-caller .role-tag{background:#9C27B0}
+.clan-card .paid-info{font-size:.8rem;margin-top:10px;margin-bottom:8px;color:#bbb;padding:6px 8px;background:rgba(0,0,0,.2);border-radius:4px}
+.pay-btn{width:100%;margin-top:auto;padding:12px 16px;font-size:1rem;border-radius:6px;cursor:pointer;background:linear-gradient(135deg,#43A047 0%,#2E7D32 100%);color:#fff;border:2px solid #66BB6A;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;box-shadow:0 3px 8px rgba(76,175,80,.4);transition:all .2s ease;animation:pulse 2s infinite}
+.pay-btn:hover:not(:disabled){background:linear-gradient(135deg,#4CAF50 0%,#388E3C 100%);box-shadow:0 4px 14px rgba(76,175,80,.7);transform:translateY(-1px)}
+.pay-btn:disabled{background:#455A64;color:#999;border-color:#546E7A;cursor:not-allowed;box-shadow:none;animation:none;text-transform:none;letter-spacing:normal}
+.pay-btn.already{background:#37474F;color:#90A4AE;border-color:#546E7A;animation:none}
+@keyframes pulse{0%,100%{box-shadow:0 3px 8px rgba(76,175,80,.4)}50%{box-shadow:0 3px 16px rgba(76,175,80,.85)}}
+.gathering-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:15px;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:5px}
+.gathering-header h2{margin:0;border-bottom:none;padding-bottom:0}
+.header-widgets{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.clock-box{text-align:right;font-family:'Consolas',monospace;background:#263238;border:1px solid #4CAF50;border-radius:6px;padding:6px 12px;box-shadow:0 0 10px rgba(76,175,80,.25)}
+.clock-time{font-size:1.5rem;font-weight:bold;color:#4CAF50;letter-spacing:2px;line-height:1.1}
+.clock-date{font-size:.75rem;color:#bbb;margin-top:2px}
+.money-box{background:#263238;border:1px solid #FFC107;border-radius:6px;padding:6px 12px;box-shadow:0 0 10px rgba(255,193,7,.25)}
+.money-label{font-size:.7rem;color:#FFC107;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;font-weight:bold;text-align:center}
+.money-value{font-family:'Consolas',monospace;font-size:1.5rem;font-weight:bold;color:#FFC107;letter-spacing:1px;line-height:1.1;text-align:right;min-width:100px;user-select:none}
+.info-note{font-size:.8rem;color:#90A4AE;margin-top:10px;padding:8px 12px;background:#1a252b;border-left:3px solid #4CAF50;border-radius:4px}
+.info-note b{color:#4CAF50}
+.logo-container{text-align:center;margin-bottom:10px}
+.logo-container img{width:250px;height:auto;border-radius:8px}
+/* Login */
+.login-overlay{position:fixed;inset:0;background:rgba(10,10,10,.95);display:flex;justify-content:center;align-items:center;z-index:2000;padding:20px}
+.login-window{background:#1e1e1e;border:2px solid #4CAF50;border-radius:12px;padding:30px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.9)}
+.login-window h2{margin-top:0;text-align:center;border-bottom:1px solid #333}
+.login-window .logo-container img{width:180px}
+.login-error{color:#f44336;font-size:.9rem;text-align:center;min-height:20px;margin-bottom:5px}
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal-window{background:#1e1e1e;border:2px solid #4CAF50;border-radius:10px;padding:25px;max-width:440px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.8)}
+.modal-window h3{margin-top:0;border-bottom:1px solid #333;padding-bottom:10px}
+.modal-window .player-name{font-size:1.15rem;font-weight:bold;color:#FFC107;margin-bottom:5px}
+.modal-window .amount-info{font-size:.9rem;color:#bbb;margin-bottom:15px}
+.modal-window .days-label{display:block;font-size:.9rem;color:#ccc;margin-bottom:5px}
+.modal-window .days-buttons{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.modal-window .days-buttons button{width:auto;flex:1 1 auto;min-width:50px;margin:0;padding:8px 10px;font-size:.9rem;background:#37474F;color:#fff;border:1px solid #546E7A;border-radius:4px}
+.modal-window .days-buttons button.selected{background:#4CAF50;border-color:#66BB6A}
+.modal-window input#daysInput{font-size:1.1rem;text-align:center}
+.modal-window .total{background:#263238;border:1px solid #FFC107;border-radius:6px;padding:12px;text-align:center;margin:15px 0;color:#bbb}
+.modal-window .formula{font-family:'Consolas',monospace;font-size:.95rem;color:#90A4AE;margin-bottom:6px}
+.modal-window .formula .mult{color:#4CAF50;font-weight:bold}
+.modal-window .formula .days{color:#FFC107;font-weight:bold}
+.modal-window .total strong{display:block;font-size:1.6rem;color:#FFC107;font-family:'Consolas',monospace;margin-top:2px}
+.modal-window .modal-actions{display:flex;gap:10px}
+.modal-window .modal-actions button{flex:1;margin:0}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="login-overlay" id="loginScreen">
+  <div class="login-window">
+    <div class="logo-container">
+      <img src="logo.png" alt="Полудень">
+    </div>
+    <h2>Вход в систему</h2>
+    <div class="login-error" id="loginError"></div>
+    <input type="text" id="loginInput" placeholder="Логин" autocomplete="username">
+    <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password">
+    <button onclick="doLogin()">Войти</button>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" style="display:none;">
+  <div class="logo-container">
+    <img src="logo.png" alt="Полудень">
+  </div>
+
+  <!-- ГЛАВНАЯ -->
+  <div id="mainView">
+    <div class="top-bar">
+      <span class="user-info" id="userInfo"></span>
+      <button class="secondary" onclick="showView('clan')">🏆 Общий сбор →</button>
+      <button class="danger" onclick="doLogout()">Выйти</button>
+    </div>
+
+    <div class="container">
+      <div class="card">
+        <h2>Добавить игрока</h2>
+        <input type="text" id="pName" placeholder="Имя игрока">
+        <input type="number" id="pPriv" placeholder="Приведёнка">
+        <input type="number" id="pSpd" placeholder="Скорость бега">
+        <select id="pRole">
+          <option value="Боец">Боец</option>
+          <option value="Командир отряда">Командир отряда</option>
+          <option value="Коллер">Коллер</option>
+        </select>
+        <select id="pSquad" style="display:none;"></select>
+        <button onclick="addPlayer()">Добавить в базу</button>
+
+        <h2 style="margin-top:20px;">База игроков</h2>
+        <div class="gray" style="font-size:.85rem;">Нажмите ★, чтобы добавить игрока в общий сбор.</div>
+        <div id="playersList"></div>
+      </div>
+
+      <div class="card">
+        <h2>Отряды</h2>
+        <div id="squadBlocks"></div>
+      </div>
+
+      <div class="card full-width" id="resetCard" style="display:none;">
+        <button class="danger" onclick="clearAllData()">Полностью сбросить все данные</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ОБЩИЙ СБОР -->
+  <div id="clanView" style="display:none;">
+    <div class="top-bar">
+      <span class="user-info" id="userInfo2"></span>
+      <button class="secondary" onclick="showView('main')">← На главную</button>
+      <button class="danger" onclick="doLogout()">Выйти</button>
+    </div>
+
+    <div class="container">
+      <div class="card full-width">
+        <div class="gathering-header">
+          <h2>Общий сбор</h2>
+          <div class="header-widgets">
+            <div class="money-box">
+              <div class="money-label">💰 Казна</div>
+              <div class="money-value" id="moneyValue">0</div>
+            </div>
+            <div class="clock-box">
+              <div class="clock-time" id="clockTime">--:--:--</div>
+              <div class="clock-date" id="clockDate">--</div>
+            </div>
+          </div>
+        </div>
+        <div class="info-note" id="infoNote"></div>
+        <div id="clanMembersList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛКА -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal-window">
+    <h3>💰 Отметка об оплате</h3>
+    <div class="player-name" id="modalPlayerName">Игрок</div>
+    <div class="amount-info">Ежедневный взнос: <b style="color:#FFC107;">100 000 ₽</b></div>
+    <label class="days-label">Количество дней:</label>
+    <div class="days-buttons">
+      <button type="button" onclick="setDays(1)">1</button>
+      <button type="button" onclick="setDays(3)">3</button>
+      <button type="button" onclick="setDays(7)">7</button>
+      <button type="button" onclick="setDays(14)">14</button>
+      <button type="button" onclick="setDays(30)">30</button>
+    </div>
+    <input type="number" id="daysInput" min="1" max="30" value="1">
+    <div class="total">
+      <div class="formula" id="modalFormula"><span class="days">1</span> <span class="mult">×</span> 100 000 ₽ =</div>
+      <strong id="modalTotal">100 000 ₽</strong>
+    </div>
+    <div class="modal-actions">
+      <button class="danger" onclick="closePayModal()">Отмена</button>
+      <button onclick="confirmPay()">Оплатить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PAY_START_DATE = '2026-09-14';
+const DAILY_AMOUNT = 100000;
+const MAX_DAYS_AHEAD = 30;
+
+let currentUser = null;
+let data = { players: [], squads: [], treasury: {}, selectedMembers: [] };
+let clockInterval = null;
+let lastRenderDate = '';
+let currentPayPlayer = null;
+
+// ---------- API ----------
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (res.status === 401) { showLogin(); throw new Error('unauth'); }
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || 'Ошибка');
+  return json;
+}
+
+// ---------- Login ----------
+function showLogin() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  stopClock();
+}
+function hideLogin() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+async function doLogin() {
+  const login = document.getElementById('loginInput').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+  try {
+    const r = await api('/api/login', { method: 'POST', body: { login, password } });
+    currentUser = r.user;
+    document.getElementById('loginPassword').value = '';
+    await loadAll();
+    hideLogin();
+  } catch (e) {
+    err.textContent = e.message;
+  }
+}
+async function doLogout() {
+  await api('/api/logout', { method: 'POST' });
+  currentUser = null;
+  showLogin();
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') doLogin();
+});
+
+// ---------- Загрузка данных ----------
+async function loadAll() {
+  const d = await api('/api/data');
+  data = d;
+  currentUser = d.user;
+  updateUserBadge();
+  renderPlayers();
+  renderSquads();
+  renderMoney();
+  renderClanMembers();
+  // Управление видимостью
+  document.getElementById('resetCard').style.display = currentUser.role === 'caller' ? 'block' : 'none';
+  document.getElementById('pSquad').style.display = currentUser.role === 'caller' ? 'block' : 'none';
+  if (currentUser.role === 'caller') {
+    const sel = document.getElementById('pSquad');
+    sel.innerHTML = '<option value="">— Без отряда —</option>' +
+      data.squads.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+  }
+  document.getElementById('infoNote').innerHTML = currentUser.role === 'caller'
+    ? `С <b>14.09.2026</b> каждый участник скидывает по <b>100 000 ₽</b> в день. Кнопка отметки доступна <b>раз в день</b>, можно оплатить <b>до 30 дней вперёд</b>.`
+    : `Вы командир отряда <b>${currentUser.squad}</b>. Отмечайте оплату своих бойцов — раз в день, до <b>30 дней вперёд</b>.`;
+}
+function updateUserBadge() {
+  const txt = `${currentUser.login} — ${currentUser.role === 'caller' ? 'Коллер' : 'Командир «' + currentUser.squad + '»'}`;
+  document.getElementById('userInfo').textContent = txt;
+  document.getElementById('userInfo2').textContent = txt;
+}
+
+// ---------- Дата ----------
+function getTodayStr() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+function parseDate(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function fmtISO(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function addDays(s,n){const d=parseDate(s);d.setDate(d.getDate()+n);return fmtISO(d);}
+function fmtRu(s){if(!s)return '—';const [y,m,d]=s.split('-').map(Number);return `${String(d).padStart(2,'0')}.${String(m).padStart(2,'0')}.${y}`;}
+
+function isPlayerPaidToday(p) {
+  const t = getTodayStr();
+  if (p.lastPaidDate === t) return true;
+  if (p.paidUntil && p.paidUntil >= t) return true;
+  return false;
+}
+function canMarkToday(p) {
+  const t = getTodayStr();
+  if (t < PAY_START_DATE) return false;
+  if (p.lastPaidDate === t) return false;
+  return true;
+}
+
+// ---------- Деньги ----------
+function getTotalTreasury() {
+  if (currentUser.role === 'caller') {
+    return Object.values(data.treasury).reduce((a, b) => a + (b || 0), 0);
+  }
+  return data.treasury[currentUser.squad] || 0;
+}
+function fmtMoney(v){return Math.round(v||0).toLocaleString('ru-RU');}
+function renderMoney(){const el=document.getElementById('moneyValue');if(el)el.textContent=fmtMoney(getTotalTreasury());}
+
+// ---------- Роли ----------
+function getRoleClass(role){
+  if (role === 'Командир отряда') return 'role-commander';
+  if (role === 'Коллер') return 'role-caller';
+  return 'role-fighter';
+}
+
+// ---------- Игроки ----------
+async function addPlayer() {
+  const name = document.getElementById('pName').value.trim();
+  const priv = parseFloat(document.getElementById('pPriv').value) || 0;
+  const spd = parseFloat(document.getElementById('pSpd').value) || 0;
+  const role = document.getElementById('pRole').value;
+  const squad = currentUser.role === 'caller' ? document.getElementById('pSquad').value || null : undefined;
+  if (!name) { alert('Введите имя!'); return; }
+  try {
+    await api('/api/players', { method: 'POST', body: { name, priv, spd, role, squad } });
+    document.getElementById('pName').value = '';
+    document.getElementById('pPriv').value = '';
+    document.getElementById('pSpd').value = '';
+    document.getElementById('pRole').selectedIndex = 0;
+    await loadAll();
+  } catch (e) { alert(e.message); }
+}
+
+async function deletePlayer(name) {
+  if (!confirm(`Удалить игрока "${name}"?`)) return;
+  try { await api('/api/players/' + encodeURIComponent(name), { method: 'DELETE' }); await loadAll(); }
+  catch (e) { alert(e.message); }
+}
+
+async function assignPlayerToSquad(name, squad) {
+  try {
+    await api('/api/players/' + encodeURIComponent(name) + '/squad', { method: 'POST', body: { squad: squad || null } });
+    await loadAll();
+  } catch (e) { alert(e.message); }
+}
+
+async function toggleMember(name) {
+  try { await api('/api/players/' + encodeURIComponent(name) + '/select', { method: 'POST' }); await loadAll(); }
+  catch (e) { alert(e.message); }
+}
+
+function renderPlayers() {
+  const c = document.getElementById('playersList');
+  c.innerHTML = '';
+  if (data.players.length === 0) { c.innerHTML = '<div class="gray">База пуста. Добавьте игроков выше.</div>'; return; }
+
+  data.players.forEach(player => {
+    const isSelected = data.selectedMembers.includes(player.name);
+    const item = document.createElement('div');
+    item.className = `player-item ${getRoleClass(player.role)} ${isSelected ? 'selected-member' : ''}`;
+
+    let squadSelect = '';
+    if (currentUser.role === 'caller') {
+      let opts = `<option value="">— Без отряда —</option>`;
+      data.squads.forEach(s => {
+        opts += `<option value="${s.name}" ${s.name === player.squad ? 'selected' : ''}>${s.name}</option>`;
+      });
+      squadSelect = `<select style="width:22%;" onchange="assignPlayerToSquad('${player.name}', this.value)">${opts}</select>`;
+    } else {
+      squadSelect = `<span style="width:22%;color:#888;font-size:.85rem;">${player.squad || '—'}</span>`;
+    }
+
+    item.innerHTML = `
+      <div class="player-info">
+        <strong>${player.name}</strong>
+        <div class="player-stats">Прив: ${player.priv} | Скор: ${player.spd} | Роль: ${player.role}</div>
+      </div>
+      ${squadSelect}
+      <button class="star-btn ${isSelected ? 'active' : ''}" onclick="toggleMember('${player.name}')" title="${isSelected ? 'Убрать из общего сбора' : 'Добавить в общий сбор'}">${isSelected ? '★' : '☆'}</button>
+      <button class="danger small" onclick="deletePlayer('${player.name}')">Удалить</button>
+    `;
+    c.appendChild(item);
+  });
+}
+
+function renderSquads() {
+  const c = document.getElementById('squadBlocks');
+  c.innerHTML = '';
+  // Командир видит только свой отряд
+  const list = currentUser.role === 'caller'
+    ? data.squads
+    : data.squads.filter(s => s.name === currentUser.squad);
+
+  list.forEach(squad => {
+    const members = data.players.filter(p => p.squad === squad.name);
+    const block = document.createElement('div');
+    block.className = 'squad-block';
+    let slots = '<div class="slots-container">';
+    for (let i = 0; i < 5; i++) {
+      const m = members[i];
+      if (m) {
+        slots += `<div class="slot filled ${getRoleClass(m.role)}">
+          <span class="name">${m.name}</span><br>
+          <span class="gray">Прив: ${m.priv} | Скор: ${m.spd}</span>
+        </div>`;
+      } else {
+        slots += `<div class="slot empty">Слот ${i + 1}:<br>Пусто</div>`;
+      }
+    }
+    slots += '</div>';
+    block.innerHTML = `<h3 style="margin-top:0;">${squad.name} (${members.length}/5)</h3>${slots}`;
+    c.appendChild(block);
+  });
+}
+
+// ---------- Общий сбор ----------
+function renderClanMembers() {
+  const c = document.getElementById('clanMembersList');
+  c.innerHTML = '';
+  const members = data.players.filter(p => data.selectedMembers.includes(p.name));
+  if (members.length === 0) {
+    c.innerHTML = '<div class="gray">Общий сбор пуст. Добавьте игроков через ★ на главной.</div>';
+    return;
+  }
+  const today = getTodayStr();
+  const notPaid = members.filter(p => !isPlayerPaidToday(p));
+  const paid = members.filter(p => isPlayerPaidToday(p));
+  const sorted = [...notPaid, ...paid];
+
+  const grid = document.createElement('div');
+  grid.className = 'clan-grid';
+
+  sorted.forEach(p => {
+    const isPaid = isPlayerPaidToday(p);
+    const canMark = canMarkToday(p);
+    const before = today < PAY_START_DATE;
+    const card = document.createElement('div');
+    card.className = `clan-card ${getRoleClass(p.role)} ${isPaid ? 'paid' : ''}`;
+    const paidInfo = p.paidUntil ? `✅ Оплачено до ${fmtRu(p.paidUntil)}` : '❌ Ещё не оплачено';
+    let label, dis, cls;
+    if (before) { label = `⏳ Оплата с ${fmtRu(PAY_START_DATE)}`; dis = true; cls = 'already'; }
+    else if (!canMark) { label = '✓ Отмечен сегодня'; dis = true; cls = 'already'; }
+    else { label = '💰 Отметиться'; dis = false; cls = ''; }
+
+    card.innerHTML = `
+      <span class="name">${p.name}</span>
+      <div class="stat">Приведёнка: ${p.priv}</div>
+      <div class="stat">Скорость бега: ${p.spd}</div>
+      <div class="role-tag">${p.role}</div>
+      <div class="paid-info">${paidInfo}</div>
+      <button class="pay-btn ${cls}" ${dis ? 'disabled' : ''} onclick="openPayModal('${p.name}')">${label}</button>
+    `;
+    grid.appendChild(card);
+  });
+  c.appendChild(grid);
+}
+
+// ---------- Модалка оплаты ----------
+function updateModalTotal() {
+  const inp = document.getElementById('daysInput');
+  let d = parseInt(inp.value, 10);
+  if (isNaN(d) || d < 1) d = 1;
+  if (d > MAX_DAYS_AHEAD) { d = MAX_DAYS_AHEAD; inp.value = d; }
+  document.getElementById('modalFormula').innerHTML =
+    `<span class="days">${d}</span> <span class="mult">×</span> ${DAILY_AMOUNT.toLocaleString('ru-RU')} ₽ =`;
+  document.getElementById('modalTotal').textContent = (d * DAILY_AMOUNT).toLocaleString('ru-RU') + ' ₽';
+}
+function setDays(n) {
+  document.getElementById('daysInput').value = n;
+  updateModalTotal();
+  document.querySelectorAll('.days-buttons button').forEach(b => b.classList.toggle('selected', +b.textContent === n));
+}
+function openPayModal(name) {
+  const t = getTodayStr();
+  if (t < PAY_START_DATE) { alert('Оплата начнётся с ' + fmtRu(PAY_START_DATE)); return; }
+  const p = data.players.find(x => x.name === name);
+  if (!p) return;
+  if (p.lastPaidDate === t) { alert('Уже отмечен сегодня'); return; }
+  currentPayPlayer = name;
+  document.getElementById('modalPlayerName').textContent = name;
+  document.getElementById('daysInput').value = 1;
+  document.querySelectorAll('.days-buttons button').forEach(b => b.classList.toggle('selected', b.textContent === '1'));
+  updateModalTotal();
+  document.getElementById('payModal').classList.add('active');
+}
+function closePayModal() {
+  document.getElementById('payModal').classList.remove('active');
+  currentPayPlayer = null;
+}
+async function confirmPay() {
+  if (!currentPayPlayer) return;
+  const days = parseInt(document.getElementById('daysInput').value, 10);
+  try {
+    const r = await api('/api/players/' + encodeURIComponent(currentPayPlayer) + '/pay', { method: 'POST', body: { days } });
+    closePayModal();
+    await loadAll();
+    alert(`✅ ${r.player.name}\n\nОплата: ${days} дн. × ${DAILY_AMOUNT.toLocaleString('ru-RU')} ₽\nИтого в казну: +${r.amount.toLocaleString('ru-RU')} ₽\n\nОплачено до: ${fmtRu(r.player.paidUntil)}`);
+  } catch (e) { alert(e.message); }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('daysInput').addEventListener('input', updateModalTotal);
+  const ov = document.getElementById('payModal');
+  ov.addEventListener('click', e => { if (e.target === ov) closePayModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && ov.classList.contains('active')) closePayModal();
+  });
+});
+
+// ---------- Сброс ----------
+async function clearAllData() {
+  if (!confirm('Удалить ВСЕХ игроков, отряды и обнулить казну? Действие необратимо.')) return;
+  try { await api('/api/reset', { method: 'POST' }); await loadAll(); alert('Данные сброшены.'); }
+  catch (e) { alert(e.message); }
+}
+
+// ---------- Просмотр ----------
+function showView(v) {
+  document.getElementById('mainView').style.display = v === 'main' ? 'block' : 'none';
+  document.getElementById('clanView').style.display = v === 'clan' ? 'block' : 'none';
+  if (v === 'clan') { renderClanMembers(); renderMoney(); startClock(); }
+  else stopClock();
+  window.scrollTo(0, 0);
+}
+
+// ---------- Часы ----------
+const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const DAYS = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+function updateClock() {
+  const n = new Date();
+  const hh = String(n.getHours()).padStart(2,'0');
+  const mm = String(n.getMinutes()).padStart(2,'0');
+  const ss = String(n.getSeconds()).padStart(2,'0');
+  document.getElementById('clockTime').textContent = `${hh}:${mm}:${ss}`;
+  document.getElementById('clockDate').textContent = `${DAYS[n.getDay()]}, ${n.getDate()} ${MONTHS[n.getMonth()]} ${n.getFullYear()} г.`;
+  const t = getTodayStr();
+  if (t !== lastRenderDate) {
+    lastRenderDate = t;
+    if (document.getElementById('clanView').style.display !== 'none') loadAll();
+  }
+}
+function startClock() { if (clockInterval) return; updateClock(); clockInterval = setInterval(updateClock, 1000); }
+function stopClock() { if (clockInterval) { clearInterval(clockInterval); clockInterval = null; } }
+
+// ---------- Старт ----------
+(async function init() {
+  try {
+    const r = await api('/api/me');
+    currentUser = r.user;
+    await loadAll();
+    hideLogin();
+  } catch { showLogin(); }
+})();
+</script>
+</body>
+</html>
