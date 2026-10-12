@@ -1,0 +1,14 @@
+# содержит Client Secret
+config.json
+config.json.tmp
+.env
+# данные и кэши программы
+data/
+market-cache.json
+market-cache.json.tmp
+items-db.json
+seen-lots.json
+auction-items.json
+__pycache__/
+*.pyc
+.venv/
